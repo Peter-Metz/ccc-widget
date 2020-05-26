@@ -67,6 +67,7 @@ def make_fig(year, tax_treat, financing):
                 & (asset_df["year"] == year)
             ]
             asset_data["assets_ovr"] = asset_data["assets"]
+            asset_data = asset_data.sort_values('assets_ovr')
 
             industry_data = industry_df.loc[
                 (industry_df["Industry"] != "Overall")
@@ -75,6 +76,8 @@ def make_fig(year, tax_treat, financing):
                 & (industry_df["year"] == year)
             ]
             industry_data["assets_ovr"] = industry_data["assets"]
+            industry_data = industry_data.sort_values('assets_ovr')
+
         return asset_data, industry_data
 
     base_asset, base_industry = make_data("base", year, tax_treat)
@@ -94,7 +97,7 @@ def make_fig(year, tax_treat, financing):
             mettr_ovr = mettr + "_ovr"
             pol[mettr_ovr] = pol[var].map(sr)
             pol["assets_ovr"] = pol[var].map(sr_size)
-        return pol
+        return pol.sort_values('assets_ovr')
 
     if tax_treat == "overall":
         base_asset = calc_overall_treat(base_asset, "asset_name")
@@ -106,27 +109,26 @@ def make_fig(year, tax_treat, financing):
     # scale the size of the bubbles
 
     sizeref = 2.0 * max(base_asset.assets_ovr / (60.0 ** 2))
-    # sizeref_industry = 2. * max(base_industry.assets_ovr / (60.**2))
 
-    def make_traces(base_data, biden_data, y):
+    def make_traces(base_data, biden_data, y, title):
         base_trace = go.Scatter(
             x=base_data[financing],
             y=base_data[y],
-            marker=dict(size=base_data["assets_ovr"], sizemode="area", sizeref=sizeref),
+            marker=dict(size=base_data["assets_ovr"], sizemode="area", sizeref=sizeref, color='#6495ED', opacity=1),
             mode="markers",
             name="Current Law",
             hovertemplate="<b>%{y}</b><br>"
             + "<i>Current Law</i><br><br>"
             + "Asset Size: $%{marker.size:.3s}<br>"
             + "METTR: %{x:.1%}<extra></extra>",
-            hoverlabel=dict(bgcolor="#b3c6ff"),
+            hoverlabel=dict(bgcolor='#abc6f7'),
         )
 
         biden_trace = go.Scatter(
             x=biden_data[financing],
             y=biden_data[y],
             marker=dict(
-                size=biden_data["assets_ovr"], sizemode="area", sizeref=sizeref
+                size=biden_data["assets_ovr"], sizemode="area", sizeref=sizeref, color='#FF7F50', opacity=1
             ),
             mode="markers",
             name="Biden 2020 Proposal",
@@ -134,11 +136,11 @@ def make_fig(year, tax_treat, financing):
             + "<i>Biden 2020 Proposal</i><br><br>"
             + "Asset Size: $%{marker.size:.3s}<br>"
             + "METTR: %{x:.1%}<extra></extra>",
-            hoverlabel=dict(bgcolor="#f3bebe"),
+            hoverlabel=dict(bgcolor="#ffb396"),
         )
 
         layout = go.Layout(
-            title="Marginal Effective Tax Rates on Capital by Asset",
+            title="Marginal Effective Tax Rates on Capital by " + title,
             xaxis=dict(
                 title="Marginal Effective Tax Rate",
                 gridcolor="#f2f2f2",
@@ -146,7 +148,7 @@ def make_fig(year, tax_treat, financing):
                 #         range=[-0.15,0.3]
             ),
             yaxis=dict(gridcolor="#f2f2f2", type="category"),
-            paper_bgcolor="white",
+            # paper_bgcolor="#F9F9F9",
             plot_bgcolor="white",
             width=1000,
         )
@@ -154,13 +156,13 @@ def make_fig(year, tax_treat, financing):
         fig = go.Figure(data=[base_trace, biden_trace], layout=layout)
         return fig
 
-    fig_asset = make_traces(base_asset, biden_asset, "asset_name")
-    fig_industry = make_traces(base_industry, biden_industry, "Industry")
+    fig_asset = make_traces(base_asset, biden_asset, "asset_name", "Asset")
+    fig_industry = make_traces(base_industry, biden_industry, "Industry", "Industry")
 
     fig_asset.layout.height = 500
     fig_industry.layout.height = 700
 
-    # fix the x-axis when changing years
+    # fix the x-axis when changing years for asset fig
     if financing == "mettr_e" and tax_treat == "corporate":
         fig_asset.layout.xaxis.range = [-0.05, 0.5]
     elif financing == "mettr_e" and tax_treat == "non-corporate":
@@ -179,6 +181,26 @@ def make_fig(year, tax_treat, financing):
         fig_asset.layout.xaxis.range = [-0.08, 0.45]
     elif financing == "mettr_e_ovr" and tax_treat == "overall":
         fig_asset.layout.xaxis.range = [-0.05, 0.45]
+
+    # fix the x-axis when changing years for industry fig
+    if financing == "mettr_e" and tax_treat == "corporate":
+        fig_industry.layout.xaxis.range = [0.1, 0.45]
+    elif financing == "mettr_e" and tax_treat == "non-corporate":
+        fig_industry.layout.xaxis.range = [0.0, 0.35]
+    elif financing == "mettr_d" and tax_treat == "corporate":
+        fig_industry.layout.xaxis.range = [-0.1, 0.3]
+    elif financing == "mettr_d" and tax_treat == "non-corporate":
+        fig_industry.layout.xaxis.range = [0.05, 0.4]
+    elif financing == "mettr_mix" and tax_treat == "corporate":
+        fig_industry.layout.xaxis.range = [0.07, 0.4]
+    elif financing == "mettr_mix" and tax_treat == "non-corporate":
+        fig_industry.layout.xaxis.range = [0.0, 0.35]
+    elif financing == "mettr_d_ovr" and tax_treat == "overall":
+        fig_industry.layout.xaxis.range = [-0.10, 0.33]
+    elif financing == "mettr_mix_ovr" and tax_treat == "overall":
+        fig_industry.layout.xaxis.range = [0.08, 0.4]
+    elif financing == "mettr_e_ovr" and tax_treat == "overall":
+        fig_industry.layout.xaxis.range = [0.1, 0.4]
 
     return fig_asset, fig_industry
 
@@ -213,6 +235,7 @@ app.layout = html.Div(
                 "display": "inline-block",
                 "padding-right": "30px",
                 "padding-bottom": "50px",
+                # "background-color": "#F9F9F9"
             },
         ),
         html.Div(
@@ -233,6 +256,7 @@ app.layout = html.Div(
                 "width": "200px",
                 "display": "inline-block",
                 "padding-right": "30px",
+                # "background-color": "#F9F9F9"
             },
         ),
         html.Div(
@@ -257,8 +281,8 @@ app.layout = html.Div(
                     id="tabs",
                     value="asset_tab",
                     children=[
-                        dcc.Tab(label="METR by Asset", value="asset_tab"),
-                        dcc.Tab(label="METR by Industry", value="industry_tab"),
+                        dcc.Tab(label="By Asset", value="asset_tab"),
+                        dcc.Tab(label="By Industry", value="industry_tab"),
                     ],
                 )
             ],

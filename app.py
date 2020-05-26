@@ -35,7 +35,7 @@ industry_df = industry_df.drop(
 )
 
 
-def make_fig(year, tax_treat, financing):
+def make_fig(year, tax_treat, financing, industry_list):
     """
     function to make Plotly figure
     will be called in app callback
@@ -106,6 +106,16 @@ def make_fig(year, tax_treat, financing):
         biden_industry = calc_overall_treat(biden_industry, "Industry")
         financing = financing + "_ovr"
 
+    # for checklist widget
+    ind_list = []
+    for ind in base_industry.major_industry.unique():
+        ind = {'label': ind, 'value': ind}
+        ind_list.append(ind)
+    ind_list.reverse()
+
+    base_industry = base_industry[base_industry['Industry'].isin(industry_list)]
+    biden_industry = biden_industry[biden_industry['Industry'].isin(industry_list)]
+
     # scale the size of the bubbles
 
     sizeref = 2.0 * max(base_asset.assets_ovr / (60.0 ** 2))
@@ -157,10 +167,14 @@ def make_fig(year, tax_treat, financing):
         return fig
 
     fig_asset = make_traces(base_asset, biden_asset, "asset_name", "Asset")
+    fig_asset.update_layout(legend_orientation="h", legend=dict(x=-.15, y=1.05))
+
+
     fig_industry = make_traces(base_industry, biden_industry, "Industry", "Industry")
+    fig_industry.update_layout(legend_orientation="h", legend=dict(x=-.35, y=1.05))
 
     fig_asset.layout.height = 500
-    fig_industry.layout.height = 700
+    fig_industry.layout.width = 900
 
     # fix the x-axis when changing years for asset fig
     if financing == "mettr_e" and tax_treat == "corporate":
@@ -202,7 +216,7 @@ def make_fig(year, tax_treat, financing):
     elif financing == "mettr_e_ovr" and tax_treat == "overall":
         fig_industry.layout.xaxis.range = [0.1, 0.4]
 
-    return fig_asset, fig_industry
+    return fig_asset, fig_industry, ind_list
 
 
 app = dash.Dash(external_stylesheets=external_stylesheets)
@@ -286,31 +300,45 @@ app.layout = html.Div(
                     ],
                 )
             ],
-            style={"max-width": "1000px"},
+            style={"max-width": "1100px"},
         ),
-        html.Div([dcc.Graph(id="fig_tab")], style={"max-width": "1000px"}),
+        html.Div([
+            html.Div([dcc.Graph(id="fig_tab")], style={'display': 'inline-block'}),
+            html.Div([
+                dcc.Checklist(
+                id = 'ind_check',
+                # options=ind_list,
+                value=['Real estate and rental and leasing', 'Manufacturing', 'Retail trade', 'Utilities', 'Information', 'Mining', 'Health care and social assistance'])],
+                style={'display': 'inline-block', 'font-size': '95%'}
+    )])
     ]
 )
 
 
 @app.callback(
     # output is figure
-    Output("fig_tab", "figure"),
+    [
+        Output("fig_tab", "figure"),
+        Output('ind_check', 'style'),
+        Output('ind_check', 'options'),
+        # Output('ind_check', 'value')
+    ],
     # inupts are widget values
     [
         Input("year", "value"),
         Input("financing", "value"),
         Input("treatment", "value"),
         Input("tabs", "value"),
+        Input('ind_check', 'value')
     ],
 )
-def update(year, financing, treatment, tab):
+def update(year, financing, treatment, tab, ind_check):
     # call function that constructs figure
-    fig_assets, fig_industry = make_fig(year, treatment, financing)
+    fig_assets, fig_industry, ind_list = make_fig(year, treatment, financing, ind_check)
     if tab == "asset_tab":
-        return fig_assets
+        return fig_assets, {'display': 'none'}, ind_list
     elif tab == "industry_tab":
-        return fig_industry
+        return fig_industry, {'display': 'inline-block'}, ind_list
 
 
 # turn debug=False for production

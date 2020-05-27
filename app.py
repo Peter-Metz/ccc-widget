@@ -8,6 +8,9 @@ from dash.dependencies import Input, Output
 
 external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
 
+# read Cost-of-Capital-Calculator output
+# combine current law and Biden results
+# by asset...
 base_asset_df = pd.read_csv("baseline_results_assets.csv")
 base_asset_df["policy"] = "base"
 
@@ -19,6 +22,7 @@ asset_df = asset_df_all.drop(
     ["Unnamed: 0", "metr_d", "metr_e", "metr_mix", "z_mix"], axis=1
 )
 
+# by industry...
 base_industry_df = pd.read_csv("baseline_byindustry.csv")
 base_industry_df["policy"] = "base"
 
@@ -67,7 +71,7 @@ def make_fig(year, tax_treat, financing, industry_list):
                 & (asset_df["year"] == year)
             ]
             asset_data["assets_ovr"] = asset_data["assets"]
-            asset_data = asset_data.sort_values('assets_ovr')
+            asset_data = asset_data.sort_values("assets_ovr")
 
             industry_data = industry_df.loc[
                 (industry_df["Industry"] != "Overall")
@@ -76,7 +80,7 @@ def make_fig(year, tax_treat, financing, industry_list):
                 & (industry_df["year"] == year)
             ]
             industry_data["assets_ovr"] = industry_data["assets"]
-            industry_data = industry_data.sort_values('assets_ovr')
+            industry_data = industry_data.sort_values("assets_ovr")
 
         return asset_data, industry_data
 
@@ -84,6 +88,10 @@ def make_fig(year, tax_treat, financing, industry_list):
     biden_asset, biden_industry = make_data("biden", year, tax_treat)
 
     def calc_overall_treat(pol, var):
+        """
+        Overall tax treatment is calculated by taking a weighted average
+        of corporate and non-corporate METRs (weighted by asset size)
+        """
         for mettr in ["mettr_d", "mettr_e", "mettr_mix"]:
             mettr_tot = mettr + "_tot"
             pol[mettr_tot] = pol["assets"] * pol[mettr]
@@ -97,7 +105,7 @@ def make_fig(year, tax_treat, financing, industry_list):
             mettr_ovr = mettr + "_ovr"
             pol[mettr_ovr] = pol[var].map(sr)
             pol["assets_ovr"] = pol[var].map(sr_size)
-        return pol.sort_values('assets_ovr')
+        return pol.sort_values("assets_ovr")
 
     if tax_treat == "overall":
         base_asset = calc_overall_treat(base_asset, "asset_name")
@@ -109,43 +117,55 @@ def make_fig(year, tax_treat, financing, industry_list):
     # for checklist widget
     ind_list = []
     for ind in base_industry.major_industry.unique():
-        ind = {'label': ind, 'value': ind}
+        ind = {"label": ind, "value": ind}
         ind_list.append(ind)
     ind_list.reverse()
 
-    base_industry = base_industry[base_industry['Industry'].isin(industry_list)]
-    biden_industry = biden_industry[biden_industry['Industry'].isin(industry_list)]
+    base_industry = base_industry[base_industry["Industry"].isin(industry_list)]
+    biden_industry = biden_industry[biden_industry["Industry"].isin(industry_list)]
 
     # scale the size of the bubbles
-
     sizeref = 2.0 * max(base_asset.assets_ovr / (60.0 ** 2))
 
     def make_traces(base_data, biden_data, y, title):
+        """
+        creates the Plotly traces -- current law and biden data series
+        """
         base_trace = go.Scatter(
             x=base_data[financing],
             y=base_data[y],
-            marker=dict(size=base_data["assets_ovr"], sizemode="area", sizeref=sizeref, color='#6495ED', opacity=1),
+            marker=dict(
+                size=base_data["assets_ovr"],
+                sizemode="area",
+                sizeref=sizeref,
+                color="#6495ED",
+                opacity=1,
+            ),
             mode="markers",
             name="Current Law",
             hovertemplate="<b>%{y}</b><br>"
             + "<i>Current Law</i><br><br>"
             + "Asset Size: $%{marker.size:.3s}<br>"
-            + "METTR: %{x:.1%}<extra></extra>",
-            hoverlabel=dict(bgcolor='#abc6f7'),
+            + "METR: %{x:.1%}<extra></extra>",
+            hoverlabel=dict(bgcolor="#abc6f7"),
         )
 
         biden_trace = go.Scatter(
             x=biden_data[financing],
             y=biden_data[y],
             marker=dict(
-                size=biden_data["assets_ovr"], sizemode="area", sizeref=sizeref, color='#FF7F50', opacity=1
+                size=biden_data["assets_ovr"],
+                sizemode="area",
+                sizeref=sizeref,
+                color="#FF7F50",
+                opacity=1,
             ),
             mode="markers",
             name="Biden 2020 Proposal",
             hovertemplate="<b>%{y}</b><br>"
             + "<i>Biden 2020 Proposal</i><br><br>"
             + "Asset Size: $%{marker.size:.3s}<br>"
-            + "METTR: %{x:.1%}<extra></extra>",
+            + "METR: %{x:.1%}<extra></extra>",
             hoverlabel=dict(bgcolor="#ffb396"),
         )
 
@@ -167,11 +187,10 @@ def make_fig(year, tax_treat, financing, industry_list):
         return fig
 
     fig_asset = make_traces(base_asset, biden_asset, "asset_name", "Asset")
-    fig_asset.update_layout(legend_orientation="h", legend=dict(x=-.15, y=1.05))
-
+    fig_asset.update_layout(legend_orientation="h", legend=dict(x=-0.15, y=1.05))
 
     fig_industry = make_traces(base_industry, biden_industry, "Industry", "Industry")
-    fig_industry.update_layout(legend_orientation="h", legend=dict(x=-.35, y=1.05))
+    fig_industry.update_layout(legend_orientation="h", legend=dict(x=-0.35, y=1.05))
 
     fig_asset.layout.height = 500
     fig_industry.layout.width = 900
@@ -302,15 +321,29 @@ app.layout = html.Div(
             ],
             style={"max-width": "1100px"},
         ),
-        html.Div([
-            html.Div([dcc.Graph(id="fig_tab")], style={'display': 'inline-block'}),
-            html.Div([
-                dcc.Checklist(
-                id = 'ind_check',
-                # options=ind_list,
-                value=['Real estate and rental and leasing', 'Manufacturing', 'Retail trade', 'Utilities', 'Information', 'Mining', 'Health care and social assistance'])],
-                style={'display': 'inline-block', 'font-size': '95%'}
-    )])
+        html.Div(
+            [
+                html.Div([dcc.Graph(id="fig_tab")], style={"display": "inline-block"}),
+                html.Div(
+                    [
+                        dcc.Checklist(
+                            id="ind_check",
+                            # options=ind_list,
+                            value=[
+                                "Real estate and rental and leasing",
+                                "Manufacturing",
+                                "Retail trade",
+                                "Utilities",
+                                "Information",
+                                "Mining",
+                                "Health care and social assistance",
+                            ],
+                        )
+                    ],
+                    style={"display": "inline-block", "font-size": "95%"},
+                ),
+            ]
+        ),
     ]
 )
 
@@ -319,9 +352,8 @@ app.layout = html.Div(
     # output is figure
     [
         Output("fig_tab", "figure"),
-        Output('ind_check', 'style'),
-        Output('ind_check', 'options'),
-        # Output('ind_check', 'value')
+        Output("ind_check", "style"),
+        Output("ind_check", "options"),
     ],
     # inupts are widget values
     [
@@ -329,16 +361,16 @@ app.layout = html.Div(
         Input("financing", "value"),
         Input("treatment", "value"),
         Input("tabs", "value"),
-        Input('ind_check', 'value')
+        Input("ind_check", "value"),
     ],
 )
 def update(year, financing, treatment, tab, ind_check):
     # call function that constructs figure
     fig_assets, fig_industry, ind_list = make_fig(year, treatment, financing, ind_check)
     if tab == "asset_tab":
-        return fig_assets, {'display': 'none'}, ind_list
+        return fig_assets, {"display": "none"}, ind_list
     elif tab == "industry_tab":
-        return fig_industry, {'display': 'inline-block'}, ind_list
+        return fig_industry, {"display": "inline-block"}, ind_list
 
 
 # turn debug=False for production

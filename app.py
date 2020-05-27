@@ -254,7 +254,7 @@ app.layout = html.Div(
                     id="year",
                     value=2020,
                     min=2020,
-                    max=2026,
+                    max=2029,
                     step=1,
                     marks={
                         2020: "2020",
@@ -264,11 +264,14 @@ app.layout = html.Div(
                         2024: "2024",
                         2025: "2025",
                         2026: "2026",
+                        2027: "2027",
+                        2028: "2028",
+                        2029: "2029",
                     },
                 ),
             ],
             style={
-                "width": "300px",
+                "width": "450px",
                 "display": "inline-block",
                 "padding-right": "30px",
                 "padding-bottom": "50px",
@@ -325,23 +328,21 @@ app.layout = html.Div(
             ],
             style={"max-width": "1100px"},
         ),
-        # html.Div(
-        #     [
-                html.Div([dcc.Graph(id="fig_tab")]),
-                html.Div(
-                    [
-                        dcc.Dropdown(
-                            id="ind_check",
-                            # options=ind_list,
-                            value=all_industries
-                            ,
-                            multi=True
-                        )
-                    ],
-                    style={"max-width": "1100px"},
-                ),
-        #     ]
-        # ),
+
+        html.Div([dcc.Graph(id="fig_tab")]),
+        html.Div(
+            [
+                dcc.Dropdown(
+                    id="ind_check",
+                    # options=ind_list,
+                    value=all_industries
+                    ,
+                    multi=True
+                )
+            ],
+            style={"max-width": "1100px"},
+        ),
+
     ]
 )
 

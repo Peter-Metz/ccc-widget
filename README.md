@@ -3,6 +3,8 @@ Dash application that compares marginal effective tax rates of Biden 2020 tax pl
 To run locally:
 
 ```
+git clone https://github.com/Peter-Metz/ccc-widget
+cd ccc-widget
 pip install dash
 python app.py
 ```

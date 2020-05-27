@@ -38,6 +38,10 @@ industry_df = industry_df.drop(
     ["Unnamed: 0", "bea_ind_code", "metr_d", "metr_e", "metr_mix", "z_mix"], axis=1
 )
 
+all_industries = []
+for ind in industry_df.major_industry.unique():
+    all_industries.append(ind)
+all_industries = sorted(all_industries)
 
 def make_fig(year, tax_treat, financing, industry_list):
     """
@@ -180,7 +184,7 @@ def make_fig(year, tax_treat, financing, industry_list):
             yaxis=dict(gridcolor="#f2f2f2", type="category"),
             # paper_bgcolor="#F9F9F9",
             plot_bgcolor="white",
-            width=1000,
+            width=1100,
         )
 
         fig = go.Figure(data=[base_trace, biden_trace], layout=layout)
@@ -193,7 +197,7 @@ def make_fig(year, tax_treat, financing, industry_list):
     fig_industry.update_layout(legend_orientation="h", legend=dict(x=-0.35, y=1.05))
 
     fig_asset.layout.height = 500
-    fig_industry.layout.width = 900
+    fig_industry.layout.height = 700
 
     # fix the x-axis when changing years for asset fig
     if financing == "mettr_e" and tax_treat == "corporate":
@@ -321,29 +325,23 @@ app.layout = html.Div(
             ],
             style={"max-width": "1100px"},
         ),
-        html.Div(
-            [
-                html.Div([dcc.Graph(id="fig_tab")], style={"display": "inline-block"}),
+        # html.Div(
+        #     [
+                html.Div([dcc.Graph(id="fig_tab")]),
                 html.Div(
                     [
-                        dcc.Checklist(
+                        dcc.Dropdown(
                             id="ind_check",
                             # options=ind_list,
-                            value=[
-                                "Real estate and rental and leasing",
-                                "Manufacturing",
-                                "Retail trade",
-                                "Utilities",
-                                "Information",
-                                "Mining",
-                                "Health care and social assistance",
-                            ],
+                            value=all_industries
+                            ,
+                            multi=True
                         )
                     ],
-                    style={"display": "inline-block", "font-size": "95%"},
+                    style={"max-width": "1100px"},
                 ),
-            ]
-        ),
+        #     ]
+        # ),
     ]
 )
 
@@ -370,7 +368,7 @@ def update(year, financing, treatment, tab, ind_check):
     if tab == "asset_tab":
         return fig_assets, {"display": "none"}, ind_list
     elif tab == "industry_tab":
-        return fig_industry, {"display": "inline-block"}, ind_list
+        return fig_industry, {}, ind_list
 
 server=app.server
 # turn debug=False for production

@@ -372,7 +372,7 @@ def update(year, financing, treatment, tab, ind_check):
     elif tab == "industry_tab":
         return fig_industry, {"display": "inline-block"}, ind_list
 
-
+server=app.server
 # turn debug=False for production
 if __name__ == "__main__":
     app.run_server(debug=True, use_reloader=True)

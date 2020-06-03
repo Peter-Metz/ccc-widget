@@ -4,9 +4,42 @@ import plotly.graph_objects as go
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_table
 from dash.dependencies import Input, Output
 
 external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
+
+
+def calc_overall_treat(df, var):
+    """
+    Overall tax treatment is calculated by taking a weighted average
+    of corporate and non-corporate METRs (weighted by asset size)
+    """
+    for mettr in ["mettr_d", "mettr_e", "mettr_mix"]:
+        mettr_tot = mettr + "_tot"
+        mettr_ovr = mettr + "_ovr"
+        df[mettr_tot] = df["assets"] * df[mettr]
+
+        # group by by asset/industry, year, and policy
+        g = df.groupby([var, "year", "policy"])
+        # calculate weighted average of corporate/non-corporate METRs
+        sr = g.apply(lambda x: x[mettr_tot].sum()) / g.apply(
+            lambda x: x["assets"].sum()
+        )
+        # total size of asset
+        sr_size = g.apply(lambda x: x["assets"].sum())
+
+        df = pd.merge(
+            df, sr.to_frame().rename(columns={0: mettr_ovr}), on=[var, "year", "policy"]
+        )
+
+        df = pd.merge(
+            df,
+            sr_size.to_frame().rename(columns={0: "assets_ovr"}),
+            on=[var, "year", "policy"],
+        )
+    return df.sort_values("assets_ovr")
+
 
 # read Cost-of-Capital-Calculator output
 # combine current law and Biden results
@@ -18,10 +51,44 @@ biden_asset_df = pd.read_csv("biden_results_assets.csv")
 biden_asset_df["policy"] = "biden"
 
 asset_df_all = pd.concat([base_asset_df, biden_asset_df])
-asset_df = asset_df_all.drop(
-    ["Unnamed: 0", "metr_d", "metr_e", "metr_mix", "z_mix"], axis=1
-)
 
+asset_df_all = calc_overall_treat(asset_df_all, "asset_name")
+
+# create separate dataframe for overall tax treatment
+asset_df_overall = pd.DataFrame()
+asset_df_overall["asset_name"] = asset_df_all["asset_name"]
+asset_df_overall["assets"] = asset_df_all["assets_ovr"]
+asset_df_overall["mettr_d"] = asset_df_all["mettr_d_ovr"]
+asset_df_overall["mettr_e"] = asset_df_all["mettr_e_ovr"]
+asset_df_overall["mettr_mix"] = asset_df_all["mettr_mix_ovr"]
+asset_df_overall["tax_treat"] = "overall"
+asset_df_overall["year"] = asset_df_all["year"]
+asset_df_overall["policy"] = asset_df_all["policy"]
+
+asset_df_all = asset_df_all.drop(
+    [
+        "Unnamed: 0",
+        "metr_d",
+        "metr_e",
+        "metr_mix",
+        "z_mix",
+        "assets_ovr",
+        "assets_ovr_x",
+        "assets_ovr_y",
+        "mettr_d_tot",
+        "mettr_e_tot",
+        "mettr_mix_tot",
+        "mettr_d_ovr",
+        "mettr_e_ovr",
+        "mettr_mix_ovr",
+    ],
+    axis=1,
+)
+# stack original df and overall tax treatment df
+asset_df = pd.concat([asset_df_all, asset_df_overall])
+asset_df = asset_df.round({"assets": 0, "mettr_d": 3, "mettr_e": 3, "mettr_mix": 3})
+
+# combine current law and Biden results
 # by industry...
 base_industry_df = pd.read_csv("baseline_byindustry.csv")
 base_industry_df["policy"] = "base"
@@ -30,20 +97,55 @@ biden_industry_df = pd.read_csv("biden_industry_results.csv")
 biden_industry_df["policy"] = "biden"
 
 industry_df_all = pd.concat([base_industry_df, biden_industry_df])
-industry_df = industry_df_all.loc[
+# only include major_industries
+industry_df_all = industry_df_all.loc[
     (industry_df_all["Industry"] == industry_df_all["major_industry"])
     & (industry_df_all["major_industry"] != "overall")
 ]
-industry_df = industry_df.drop(
-    ["Unnamed: 0", "bea_ind_code", "metr_d", "metr_e", "metr_mix", "z_mix"], axis=1
+
+industry_df_all = calc_overall_treat(industry_df_all, "Industry")
+
+# create separate dataframe for overall tax treatment
+industry_df_overall = pd.DataFrame()
+industry_df_overall["Industry"] = industry_df_all["Industry"]
+industry_df_overall["major_industry"] = industry_df_all["major_industry"]
+industry_df_overall["assets"] = industry_df_all["assets_ovr"]
+industry_df_overall["mettr_d"] = industry_df_all["mettr_d_ovr"]
+industry_df_overall["mettr_e"] = industry_df_all["mettr_e_ovr"]
+industry_df_overall["mettr_mix"] = industry_df_all["mettr_mix_ovr"]
+industry_df_overall["tax_treat"] = "overall"
+industry_df_overall["year"] = industry_df_all["year"]
+industry_df_overall["policy"] = industry_df_all["policy"]
+industry_df_overall.drop_duplicates(inplace=True)
+
+industry_df_all = industry_df_all.drop(
+    [
+        "Unnamed: 0",
+        "bea_ind_code",
+        "metr_d",
+        "metr_e",
+        "metr_mix",
+        "z_mix",
+        "assets_ovr",
+        "assets_ovr_x",
+        "assets_ovr_y",
+        "mettr_d_ovr",
+        "mettr_e_ovr",
+        "mettr_mix_ovr",
+        "mettr_d_tot",
+        "mettr_e_tot",
+        "mettr_mix_tot",
+    ],
+    axis=1,
+)
+# stack original df and overall tax treatment df
+industry_df = pd.concat([industry_df_all, industry_df_overall])
+industry_df = industry_df.round(
+    {"assets": 0, "mettr_d": 3, "mettr_e": 3, "mettr_mix": 3}
 )
 
-all_industries = []
-for ind in industry_df.major_industry.unique():
-    all_industries.append(ind)
-all_industries = sorted(all_industries)
 
-def make_fig(year, tax_treat, financing, industry_list):
+def make_fig(year, tax_treat, financing):
     """
     function to make Plotly figure
     will be called in app callback
@@ -54,82 +156,28 @@ def make_fig(year, tax_treat, financing, industry_list):
         filter data by policy, year, and tax treatment
         omit 'overall' asset type because it messes with the bubble scaling
         """
-        if tax_treat == "overall":
-            asset_data = asset_df.loc[
-                (asset_df["asset_name"] != "Overall")
-                & (asset_df["policy"] == pol)
-                & (asset_df["year"] == year)
-            ]
+        # if tax_treat == "overall":
+        asset_data = asset_df.loc[
+            (asset_df["asset_name"] != "Overall")
+            & (asset_df["policy"] == pol)
+            & (asset_df["year"] == year)
+            & (asset_df["tax_treat"] == tax_treat)
+        ]
 
-            industry_data = industry_df.loc[
-                (industry_df["Industry"] != "Overall")
-                & (industry_df["policy"] == pol)
-                & (industry_df["year"] == year)
-            ]
-
-        else:
-            asset_data = asset_df.loc[
-                (asset_df["asset_name"] != "Overall")
-                & (asset_df["policy"] == pol)
-                & (asset_df["tax_treat"] == tax_treat)
-                & (asset_df["year"] == year)
-            ]
-            asset_data["assets_ovr"] = asset_data["assets"]
-            asset_data = asset_data.sort_values("assets_ovr")
-
-            industry_data = industry_df.loc[
-                (industry_df["Industry"] != "Overall")
-                & (industry_df["policy"] == pol)
-                & (industry_df["tax_treat"] == tax_treat)
-                & (industry_df["year"] == year)
-            ]
-            industry_data["assets_ovr"] = industry_data["assets"]
-            industry_data = industry_data.sort_values("assets_ovr")
+        industry_data = industry_df.loc[
+            (industry_df["Industry"] != "Overall")
+            & (industry_df["policy"] == pol)
+            & (industry_df["year"] == year)
+            & (industry_df["tax_treat"] == tax_treat)
+        ]
 
         return asset_data, industry_data
 
     base_asset, base_industry = make_data("base", year, tax_treat)
     biden_asset, biden_industry = make_data("biden", year, tax_treat)
 
-    def calc_overall_treat(pol, var):
-        """
-        Overall tax treatment is calculated by taking a weighted average
-        of corporate and non-corporate METRs (weighted by asset size)
-        """
-        for mettr in ["mettr_d", "mettr_e", "mettr_mix"]:
-            mettr_tot = mettr + "_tot"
-            pol[mettr_tot] = pol["assets"] * pol[mettr]
-
-            g = pol.groupby(var)
-            sr = g.apply(lambda x: x[mettr_tot].sum()) / g.apply(
-                lambda x: x["assets"].sum()
-            )
-            sr_size = g.apply(lambda x: x["assets"].sum())
-
-            mettr_ovr = mettr + "_ovr"
-            pol[mettr_ovr] = pol[var].map(sr)
-            pol["assets_ovr"] = pol[var].map(sr_size)
-        return pol.sort_values("assets_ovr")
-
-    if tax_treat == "overall":
-        base_asset = calc_overall_treat(base_asset, "asset_name")
-        biden_asset = calc_overall_treat(biden_asset, "asset_name")
-        base_industry = calc_overall_treat(base_industry, "Industry")
-        biden_industry = calc_overall_treat(biden_industry, "Industry")
-        financing = financing + "_ovr"
-
-    # for checklist widget
-    ind_list = []
-    for ind in base_industry.major_industry.unique():
-        ind = {"label": ind, "value": ind}
-        ind_list.append(ind)
-    ind_list.reverse()
-
-    base_industry = base_industry[base_industry["Industry"].isin(industry_list)]
-    biden_industry = biden_industry[biden_industry["Industry"].isin(industry_list)]
-
     # scale the size of the bubbles
-    sizeref = 2.0 * max(base_asset.assets_ovr / (60.0 ** 2))
+    sizeref = 2.0 * max(base_asset.assets / (60.0 ** 2))
 
     def make_traces(base_data, biden_data, y, title):
         """
@@ -139,7 +187,7 @@ def make_fig(year, tax_treat, financing, industry_list):
             x=base_data[financing],
             y=base_data[y],
             marker=dict(
-                size=base_data["assets_ovr"],
+                size=base_data["assets"],
                 sizemode="area",
                 sizeref=sizeref,
                 color="#6495ED",
@@ -158,7 +206,7 @@ def make_fig(year, tax_treat, financing, industry_list):
             x=biden_data[financing],
             y=biden_data[y],
             marker=dict(
-                size=biden_data["assets_ovr"],
+                size=biden_data["assets"],
                 sizemode="area",
                 sizeref=sizeref,
                 color="#FF7F50",
@@ -212,11 +260,11 @@ def make_fig(year, tax_treat, financing, industry_list):
         fig_asset.layout.xaxis.range = [-0.07, 0.45]
     elif financing == "mettr_mix" and tax_treat == "non-corporate":
         fig_asset.layout.xaxis.range = [-0.20, 0.37]
-    elif financing == "mettr_d_ovr" and tax_treat == "overall":
+    elif financing == "mettr_d" and tax_treat == "overall":
         fig_asset.layout.xaxis.range = [-0.40, 0.42]
-    elif financing == "mettr_mix_ovr" and tax_treat == "overall":
+    elif financing == "mettr_mix" and tax_treat == "overall":
         fig_asset.layout.xaxis.range = [-0.08, 0.45]
-    elif financing == "mettr_e_ovr" and tax_treat == "overall":
+    elif financing == "mettr_e" and tax_treat == "overall":
         fig_asset.layout.xaxis.range = [-0.05, 0.45]
 
     # fix the x-axis when changing years for industry fig
@@ -232,14 +280,14 @@ def make_fig(year, tax_treat, financing, industry_list):
         fig_industry.layout.xaxis.range = [0.07, 0.4]
     elif financing == "mettr_mix" and tax_treat == "non-corporate":
         fig_industry.layout.xaxis.range = [0.0, 0.35]
-    elif financing == "mettr_d_ovr" and tax_treat == "overall":
+    elif financing == "mettr_d" and tax_treat == "overall":
         fig_industry.layout.xaxis.range = [-0.10, 0.33]
-    elif financing == "mettr_mix_ovr" and tax_treat == "overall":
+    elif financing == "mettr_mix" and tax_treat == "overall":
         fig_industry.layout.xaxis.range = [0.08, 0.4]
-    elif financing == "mettr_e_ovr" and tax_treat == "overall":
+    elif financing == "mettr_e" and tax_treat == "overall":
         fig_industry.layout.xaxis.range = [0.1, 0.4]
 
-    return fig_asset, fig_industry, ind_list
+    return fig_asset, fig_industry
 
 
 app = dash.Dash(external_stylesheets=external_stylesheets)
@@ -328,50 +376,31 @@ app.layout = html.Div(
             ],
             style={"max-width": "1100px"},
         ),
-
         html.Div([dcc.Graph(id="fig_tab")]),
-        html.Div(
-            [
-                dcc.Dropdown(
-                    id="ind_check",
-                    # options=ind_list,
-                    value=all_industries
-                    ,
-                    multi=True
-                )
-            ],
-            style={"max-width": "1100px"},
-        ),
-
     ]
 )
 
 
 @app.callback(
     # output is figure
-    [
-        Output("fig_tab", "figure"),
-        Output("ind_check", "style"),
-        Output("ind_check", "options"),
-    ],
-    # inupts are widget values
+    Output("fig_tab", "figure"),
     [
         Input("year", "value"),
         Input("financing", "value"),
         Input("treatment", "value"),
         Input("tabs", "value"),
-        Input("ind_check", "value"),
     ],
 )
-def update(year, financing, treatment, tab, ind_check):
+def update(year, financing, treatment, tab):
     # call function that constructs figure
-    fig_assets, fig_industry, ind_list = make_fig(year, treatment, financing, ind_check)
+    fig_assets, fig_industry = make_fig(year, treatment, financing)
     if tab == "asset_tab":
-        return fig_assets, {"display": "none"}, ind_list
+        return fig_assets
     elif tab == "industry_tab":
-        return fig_industry, {}, ind_list
+        return fig_industry
 
-server=app.server
+
+server = app.server
 # turn debug=False for production
 if __name__ == "__main__":
     app.run_server(debug=True, use_reloader=True)

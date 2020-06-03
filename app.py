@@ -87,8 +87,9 @@ asset_df_all = asset_df_all.drop(
 )
 # stack original df and overall tax treatment df
 asset_df = pd.concat([asset_df_all, asset_df_overall])
-asset_df = asset_df.sort_values(by=["year", "tax_treat", "policy", "asset_name"])
-asset_df = asset_df.round({"assets": 0, "mettr_d": 3, "mettr_e": 3, "mettr_mix": 3})
+
+asset_table = asset_df.sort_values(by=["year", "tax_treat", "policy", "asset_name"])
+asset_table = asset_table.round({"assets": 0, "mettr_d": 3, "mettr_e": 3, "mettr_mix": 3})
 
 # combine current law and Biden results
 # by industry...
@@ -144,8 +145,9 @@ industry_df_all = industry_df_all.drop(
 )
 # stack original df and overall tax treatment df
 industry_df = pd.concat([industry_df_all, industry_df_overall])
-industry_df = industry_df.sort_values(by=["year", "tax_treat", "policy", "Industry"])
-industry_df = industry_df.round(
+
+industry_table = industry_df.sort_values(by=["year", "tax_treat", "policy", "Industry"])
+industry_table = industry_table.round(
     {"assets": 0, "mettr_d": 3, "mettr_e": 3, "mettr_mix": 3}
 )
 
@@ -398,10 +400,10 @@ app.layout = html.Div(
                                 "Year",
                                 "Policy",
                             ],
-                            asset_df.columns,
+                            asset_table.columns,
                         )
                     ],
-                    data=asset_df.to_dict("records"),
+                    data=asset_table.to_dict("records"),
                     filter_action="native",
                     sort_action="native",
                     sort_mode="multi",
@@ -446,7 +448,7 @@ def update(year, financing, treatment, tab):
                 "Year",
                 "Policy",
             ],
-            industry_df.columns,
+            industry_table.columns,
         )
     ]
     asset_cols = [
@@ -462,11 +464,11 @@ def update(year, financing, treatment, tab):
                 "Year",
                 "Policy",
             ],
-            asset_df.columns,
+            asset_table.columns,
         )
     ]
-    ind_data = industry_df.to_dict("records")
-    asset_data = asset_df.to_dict("records")
+    ind_data = industry_table.to_dict("records")
+    asset_data = asset_table.to_dict("records")
 
     fig_assets, fig_industry = make_fig(year, treatment, financing)
     if tab == "asset_tab":

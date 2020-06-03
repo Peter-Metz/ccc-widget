@@ -51,6 +51,7 @@ biden_asset_df = pd.read_csv("biden_results_assets.csv")
 biden_asset_df["policy"] = "biden"
 
 asset_df_all = pd.concat([base_asset_df, biden_asset_df])
+asset_df_all = asset_df_all.loc[asset_df_all["asset_name"] != "Overall"]
 
 asset_df_all = calc_overall_treat(asset_df_all, "asset_name")
 
@@ -86,6 +87,7 @@ asset_df_all = asset_df_all.drop(
 )
 # stack original df and overall tax treatment df
 asset_df = pd.concat([asset_df_all, asset_df_overall])
+asset_df = asset_df.sort_values(by=["year", "tax_treat", "policy", "asset_name"])
 asset_df = asset_df.round({"assets": 0, "mettr_d": 3, "mettr_e": 3, "mettr_mix": 3})
 
 # combine current law and Biden results
@@ -100,7 +102,8 @@ industry_df_all = pd.concat([base_industry_df, biden_industry_df])
 # only include major_industries
 industry_df_all = industry_df_all.loc[
     (industry_df_all["Industry"] == industry_df_all["major_industry"])
-    & (industry_df_all["major_industry"] != "overall")
+    & (industry_df_all["major_industry"] != "Overall")
+    # & (industry_df_all['Industry'] != "Overall")
 ]
 
 industry_df_all = calc_overall_treat(industry_df_all, "Industry")
@@ -122,6 +125,7 @@ industry_df_all = industry_df_all.drop(
     [
         "Unnamed: 0",
         "bea_ind_code",
+        "major_industry",
         "metr_d",
         "metr_e",
         "metr_mix",
@@ -140,6 +144,7 @@ industry_df_all = industry_df_all.drop(
 )
 # stack original df and overall tax treatment df
 industry_df = pd.concat([industry_df_all, industry_df_overall])
+industry_df = industry_df.sort_values(by=["year", "tax_treat", "policy", "Industry"])
 industry_df = industry_df.round(
     {"assets": 0, "mettr_d": 3, "mettr_e": 3, "mettr_mix": 3}
 )
@@ -156,17 +161,16 @@ def make_fig(year, tax_treat, financing):
         filter data by policy, year, and tax treatment
         omit 'overall' asset type because it messes with the bubble scaling
         """
-        # if tax_treat == "overall":
         asset_data = asset_df.loc[
-            (asset_df["asset_name"] != "Overall")
-            & (asset_df["policy"] == pol)
+            # (asset_df["asset_name"] != "Overall")
+            (asset_df["policy"] == pol)
             & (asset_df["year"] == year)
             & (asset_df["tax_treat"] == tax_treat)
         ]
 
         industry_data = industry_df.loc[
-            (industry_df["Industry"] != "Overall")
-            & (industry_df["policy"] == pol)
+            # (industry_df["Industry"] != "Overall")
+            (industry_df["policy"] == pol)
             & (industry_df["year"] == year)
             & (industry_df["tax_treat"] == tax_treat)
         ]
@@ -377,13 +381,48 @@ app.layout = html.Div(
             style={"max-width": "1100px"},
         ),
         html.Div([dcc.Graph(id="fig_tab")]),
+        html.Div(
+            [
+                dash_table.DataTable(
+                    id="data_table",
+                    columns=[
+                        {"name": i, "id": j}
+                        for i, j in zip(
+                            [
+                                "Asset Name",
+                                "Asset Size",
+                                "METR - Debt",
+                                "METR - Equity",
+                                "METR - Mix",
+                                "Tax Treatment",
+                                "Year",
+                                "Policy",
+                            ],
+                            asset_df.columns,
+                        )
+                    ],
+                    data=asset_df.to_dict("records"),
+                    filter_action="native",
+                    sort_action="native",
+                    sort_mode="multi",
+                    page_action="native",
+                    page_current=0,
+                    page_size=15,
+                )
+            ],
+            style={"padding-top": "50px", "max-width": "1100px"},
+        ),
     ]
 )
 
 
 @app.callback(
     # output is figure
-    Output("fig_tab", "figure"),
+    [
+        Output("fig_tab", "figure"),
+        Output("data_table", "columns"),
+        Output("data_table", "data"),
+    ],
     [
         Input("year", "value"),
         Input("financing", "value"),
@@ -393,11 +432,46 @@ app.layout = html.Div(
 )
 def update(year, financing, treatment, tab):
     # call function that constructs figure
+    ind_cols = [
+        {"name": i, "id": j}
+        for i, j in zip(
+            [
+                "Industry",
+                "Asset Size",
+                "METR - Debt",
+                "METR - Equity",
+                "METR - Mix",
+                "Tax Treatment",
+                "Year",
+                "Policy",
+            ],
+            industry_df.columns,
+        )
+    ]
+    asset_cols = [
+        {"name": i, "id": j}
+        for i, j in zip(
+            [
+                "Asset Name",
+                "Asset Size",
+                "METR - Debt",
+                "METR - Equity",
+                "METR - Mix",
+                "Tax Treatment",
+                "Year",
+                "Policy",
+            ],
+            asset_df.columns,
+        )
+    ]
+    ind_data = industry_df.to_dict("records")
+    asset_data = asset_df.to_dict("records")
+
     fig_assets, fig_industry = make_fig(year, treatment, financing)
     if tab == "asset_tab":
-        return fig_assets
+        return fig_assets, asset_cols, asset_data
     elif tab == "industry_tab":
-        return fig_industry
+        return fig_industry, ind_cols, ind_data
 
 
 server = app.server

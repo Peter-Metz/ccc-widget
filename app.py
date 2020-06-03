@@ -408,6 +408,7 @@ app.layout = html.Div(
                     page_action="native",
                     page_current=0,
                     page_size=15,
+                    style_cell={'font-size': '12px', 'font-family':'HelveticaNeue'}
                 )
             ],
             style={"padding-top": "50px", "max-width": "1100px"},

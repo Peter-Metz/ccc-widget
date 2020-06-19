@@ -422,13 +422,14 @@ app.layout = html.Div(
                     ],
                 )
             ],
-            style={"max-width": "1100px"},
+            style={"max-width": "1050px"},
         ),
         html.Div([dcc.Graph(id="fig_tab")]),
         dcc.Markdown(
             """
             ##### Current Law
-            """
+            """,
+            style={"padding-top": "30px"},
         ),
         html.Div(
             [
@@ -438,9 +439,10 @@ app.layout = html.Div(
                     sort_action="native",
                     sort_mode="multi",
                     page_action="native",
+                    style_cell={'font-size': '12px', 'font-family':'HelveticaNeue'}
                 )
             ],
-            style={"max-width": "1100px"},
+            style={"max-width": "1000px"},
         ),
         dcc.Markdown(
             """
@@ -456,9 +458,10 @@ app.layout = html.Div(
                     sort_action="native",
                     sort_mode="multi",
                     page_action="native",
+                    style_cell={'font-size': '12px', 'font-family':'HelveticaNeue'}
                 )
             ],
-            style={"max-width": "1100px"},
+            style={"max-width": "1000px"},
         ),
     ]
 )

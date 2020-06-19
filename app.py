@@ -88,9 +88,6 @@ asset_df_all = asset_df_all.drop(
 # stack original df and overall tax treatment df
 asset_df = pd.concat([asset_df_all, asset_df_overall])
 
-asset_table = asset_df.sort_values(by=["year", "tax_treat", "policy", "asset_name"])
-asset_table = asset_table.round({"assets": 0, "mettr_d": 3, "mettr_e": 3, "mettr_mix": 3})
-
 # combine current law and Biden results
 # by industry...
 base_industry_df = pd.read_csv("baseline_byindustry.csv")
@@ -146,11 +143,6 @@ industry_df_all = industry_df_all.drop(
 # stack original df and overall tax treatment df
 industry_df = pd.concat([industry_df_all, industry_df_overall])
 
-industry_table = industry_df.sort_values(by=["year", "tax_treat", "policy", "Industry"])
-industry_table = industry_table.round(
-    {"assets": 0, "mettr_d": 3, "mettr_e": 3, "mettr_mix": 3}
-)
-
 
 def make_fig(year, tax_treat, financing):
     """
@@ -178,6 +170,49 @@ def make_fig(year, tax_treat, financing):
         ]
 
         return asset_data, industry_data
+
+    def make_tables(tax_treat, financing):
+        """
+        prepare tables for raw data shown below plots
+        """
+        asset_table_base = asset_df.loc[
+            (asset_df["policy"] == "base") & (asset_df["tax_treat"] == tax_treat)
+        ]
+        asset_table_base = asset_table_base.pivot_table(
+            index="asset_name", columns="year", values=financing
+        )
+        asset_table_base = round(asset_table_base.reset_index(), 3)
+        asset_table_base.rename(columns={"asset_name": "Asset"}, inplace=True)
+
+        asset_table_biden = asset_df.loc[
+            (asset_df["policy"] == "biden") & (asset_df["tax_treat"] == tax_treat)
+        ]
+        asset_table_biden = asset_table_biden.pivot_table(
+            index="asset_name", columns="year", values=financing
+        )
+        asset_table_biden = round(asset_table_biden.reset_index(), 3)
+        asset_table_biden.rename(columns={"asset_name": "Asset"}, inplace=True)
+
+        ind_table_base = industry_df.loc[
+            (industry_df["policy"] == "base") & (industry_df["tax_treat"] == tax_treat)
+        ]
+        ind_table_base = ind_table_base.pivot_table(
+            index="Industry", columns="year", values=financing
+        )
+        ind_table_base = round(ind_table_base.reset_index(), 3)
+
+        ind_table_biden = industry_df.loc[
+            (industry_df["policy"] == "biden") & (industry_df["tax_treat"] == tax_treat)
+        ]
+        ind_table_biden = ind_table_biden.pivot_table(
+            index="Industry", columns="year", values=financing
+        )
+        ind_table_biden = round(ind_table_biden.reset_index(), 3)
+        return asset_table_base, asset_table_biden, ind_table_base, ind_table_biden
+
+    asset_table_base, asset_table_biden, ind_table_base, ind_table_biden = make_tables(
+        tax_treat, financing
+    )
 
     base_asset, base_industry = make_data("base", year, tax_treat)
     biden_asset, biden_industry = make_data("biden", year, tax_treat)
@@ -293,7 +328,14 @@ def make_fig(year, tax_treat, financing):
     elif financing == "mettr_e" and tax_treat == "overall":
         fig_industry.layout.xaxis.range = [0.1, 0.4]
 
-    return fig_asset, fig_industry
+    return (
+        fig_asset,
+        fig_industry,
+        asset_table_base,
+        asset_table_biden,
+        ind_table_base,
+        ind_table_biden,
+    )
 
 
 app = dash.Dash(external_stylesheets=external_stylesheets)
@@ -383,37 +425,40 @@ app.layout = html.Div(
             style={"max-width": "1100px"},
         ),
         html.Div([dcc.Graph(id="fig_tab")]),
+        dcc.Markdown(
+            """
+            ##### Current Law
+            """
+        ),
         html.Div(
             [
                 dash_table.DataTable(
-                    id="data_table",
-                    columns=[
-                        {"name": i, "id": j}
-                        for i, j in zip(
-                            [
-                                "Asset Name",
-                                "Asset Size",
-                                "METR - Debt",
-                                "METR - Equity",
-                                "METR - Mix",
-                                "Tax Treatment",
-                                "Year",
-                                "Policy",
-                            ],
-                            asset_table.columns,
-                        )
-                    ],
-                    data=asset_table.to_dict("records"),
+                    id="data_table_base",
                     filter_action="native",
                     sort_action="native",
                     sort_mode="multi",
                     page_action="native",
-                    page_current=0,
-                    page_size=15,
-                    style_cell={'font-size': '12px', 'font-family':'HelveticaNeue'}
                 )
             ],
-            style={"padding-top": "50px", "max-width": "1100px"},
+            style={"max-width": "1100px"},
+        ),
+        dcc.Markdown(
+            """
+            ##### Biden Proposal
+            """,
+            style={"padding-top": "30px"},
+        ),
+        html.Div(
+            [
+                dash_table.DataTable(
+                    id="data_table_biden",
+                    filter_action="native",
+                    sort_action="native",
+                    sort_mode="multi",
+                    page_action="native",
+                )
+            ],
+            style={"max-width": "1100px"},
         ),
     ]
 )
@@ -423,8 +468,10 @@ app.layout = html.Div(
     # output is figure
     [
         Output("fig_tab", "figure"),
-        Output("data_table", "columns"),
-        Output("data_table", "data"),
+        Output("data_table_base", "columns"),
+        Output("data_table_base", "data"),
+        Output("data_table_biden", "columns"),
+        Output("data_table_biden", "data"),
     ],
     [
         Input("year", "value"),
@@ -435,46 +482,29 @@ app.layout = html.Div(
 )
 def update(year, financing, treatment, tab):
     # call function that constructs figure
-    ind_cols = [
-        {"name": i, "id": j}
-        for i, j in zip(
-            [
-                "Industry",
-                "Asset Size",
-                "METR - Debt",
-                "METR - Equity",
-                "METR - Mix",
-                "Tax Treatment",
-                "Year",
-                "Policy",
-            ],
-            industry_table.columns,
-        )
-    ]
-    asset_cols = [
-        {"name": i, "id": j}
-        for i, j in zip(
-            [
-                "Asset Name",
-                "Asset Size",
-                "METR - Debt",
-                "METR - Equity",
-                "METR - Mix",
-                "Tax Treatment",
-                "Year",
-                "Policy",
-            ],
-            asset_table.columns,
-        )
-    ]
-    ind_data = industry_table.to_dict("records")
-    asset_data = asset_table.to_dict("records")
 
-    fig_assets, fig_industry = make_fig(year, treatment, financing)
+    fig_assets, fig_industry, asset_table_base, asset_table_biden, ind_table_base, ind_table_biden = make_fig(
+        year, treatment, financing
+    )
+
+    columns_asset = [{"name": str(i), "id": str(i)} for i in asset_table_base.columns]
+    data_asset_base = asset_table_base.to_dict("records")
+    data_asset_biden = asset_table_biden.to_dict("records")
+
+    columns_ind = [{"name": str(i), "id": str(i)} for i in ind_table_base.columns]
+    data_ind_base = ind_table_base.to_dict("records")
+    data_ind_biden = ind_table_biden.to_dict("records")
+
     if tab == "asset_tab":
-        return fig_assets, asset_cols, asset_data
+        return (
+            fig_assets,
+            columns_asset,
+            data_asset_base,
+            columns_asset,
+            data_asset_biden,
+        )
     elif tab == "industry_tab":
-        return fig_industry, ind_cols, ind_data
+        return fig_industry, columns_ind, data_ind_base, columns_ind, data_ind_biden
 
 
 server = app.server

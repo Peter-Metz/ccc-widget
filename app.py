@@ -342,6 +342,14 @@ app = dash.Dash(external_stylesheets=external_stylesheets)
 # layout can be thought of as HTML elements
 app.layout = html.Div(
     [
+        dcc.Markdown(
+            """
+            ### Effective tax rates on capital under current law and Former Vice President Biden's tax proposal
+
+            *Modeling and design by Matt Jensen, Erin Melly, Peter Metz, and Kyle Pomerleau*
+            """,
+            style={"max-width": "700px", "padding-bottom": "60px", "color": "#4f5866"}
+        ),
         html.Div(
             [
                 # year slider
@@ -370,7 +378,7 @@ app.layout = html.Div(
                 "width": "450px",
                 "display": "inline-block",
                 "padding-right": "30px",
-                "padding-bottom": "50px",
+                "padding-bottom": "50px",              
                 # "background-color": "#F9F9F9"
             },
         ),
@@ -427,6 +435,18 @@ app.layout = html.Div(
         html.Div([dcc.Graph(id="fig_tab")]),
         dcc.Markdown(
             """
+            **Note:** This project builds on TK paper by Melly and Pomerleau. 
+            Data for this project are generated using the open-source 
+            [Cost-of-Capital-Calculator](https://github.com/PSLmodels/Cost-of-Capital-Calculator) 
+            and [Tax-Calculator](https://github.com/PSLmodels/Tax-Calculator) projects. 
+            The code that modifies the underlying models to produce these estimates
+            can be found [here](https://github.com/kpomerleau/Cost-of-Capital-Calculator/tree/Tests) 
+            and [here](https://github.com/erinmelly/Tax-Calculator/tree/Biden).
+            """,
+            style={"padding-top": "30px", "max-width": "1000px"},
+        ),
+        dcc.Markdown(
+            """
             ##### Current Law
             """,
             style={"padding-top": "30px"},
@@ -439,7 +459,7 @@ app.layout = html.Div(
                     sort_action="native",
                     sort_mode="multi",
                     page_action="native",
-                    style_cell={'font-size': '12px', 'font-family':'HelveticaNeue'}
+                    style_cell={"font-size": "12px", "font-family": "HelveticaNeue"},
                 )
             ],
             style={"max-width": "1000px"},
@@ -458,7 +478,7 @@ app.layout = html.Div(
                     sort_action="native",
                     sort_mode="multi",
                     page_action="native",
-                    style_cell={'font-size': '12px', 'font-family':'HelveticaNeue'}
+                    style_cell={"font-size": "12px", "font-family": "HelveticaNeue"},
                 )
             ],
             style={"max-width": "1000px"},

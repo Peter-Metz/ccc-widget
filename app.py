@@ -360,7 +360,7 @@ app.layout = html.Div(
             """
             ### Effective tax rates on capital under current law and Former Vice President Biden's tax proposal
 
-            *Modeling and design by Matt Jensen, Erin Melly, Peter Metz, and Kyle Pomerleau*
+            *Modeling and design by Matt Jensen, Peter Metz, and Kyle Pomerleau*
             """,
             style={"max-width": "700px", "padding-bottom": "60px", "color": "#4f5866"}
         ),
@@ -449,7 +449,7 @@ app.layout = html.Div(
         html.Div([dcc.Graph(id="fig_tab")]),
         dcc.Markdown(
             """
-            **Note:** This project builds on TK paper by Melly and Pomerleau. 
+            **Note:** This project builds on TK paper by Pomerleau. 
             Data for this project are generated using the open-source 
             [Cost-of-Capital-Calculator](https://github.com/PSLmodels/Cost-of-Capital-Calculator) 
             and [Tax-Calculator](https://github.com/PSLmodels/Tax-Calculator) projects. 

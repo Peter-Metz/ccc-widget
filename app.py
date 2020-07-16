@@ -51,7 +51,6 @@ biden_asset_df = pd.read_csv("biden_results_assets.csv")
 biden_asset_df["policy"] = "biden"
 
 asset_df_all = pd.concat([base_asset_df, biden_asset_df])
-asset_df_all = asset_df_all.loc[asset_df_all["asset_name"] != "Overall"]
 
 asset_df_all = calc_overall_treat(asset_df_all, "asset_name")
 
@@ -100,8 +99,6 @@ industry_df_all = pd.concat([base_industry_df, biden_industry_df])
 # only include major_industries
 industry_df_all = industry_df_all.loc[
     (industry_df_all["Industry"] == industry_df_all["major_industry"])
-    & (industry_df_all["major_industry"] != "Overall")
-    # & (industry_df_all['Industry'] != "Overall")
 ]
 
 industry_df_all = calc_overall_treat(industry_df_all, "Industry")
@@ -143,7 +140,6 @@ industry_df_all = industry_df_all.drop(
 # stack original df and overall tax treatment df
 industry_df = pd.concat([industry_df_all, industry_df_overall])
 
-
 def make_fig(year, tax_treat, financing):
     """
     function to make Plotly figure
@@ -156,15 +152,15 @@ def make_fig(year, tax_treat, financing):
         omit 'overall' asset type because it messes with the bubble scaling
         """
         asset_data = asset_df.loc[
-            # (asset_df["asset_name"] != "Overall")
-            (asset_df["policy"] == pol)
+            (asset_df["asset_name"] != "Overall")
+            & (asset_df["policy"] == pol)
             & (asset_df["year"] == year)
             & (asset_df["tax_treat"] == tax_treat)
         ]
 
         industry_data = industry_df.loc[
-            # (industry_df["Industry"] != "Overall")
-            (industry_df["policy"] == pol)
+            (industry_df["Industry"] != "Overall")
+            & (industry_df["policy"] == pol)
             & (industry_df["year"] == year)
             & (industry_df["tax_treat"] == tax_treat)
         ]
@@ -208,6 +204,24 @@ def make_fig(year, tax_treat, financing):
             index="Industry", columns="year", values=financing
         )
         ind_table_biden = round(ind_table_biden.reset_index(), 3)
+
+        # Resort so that Overall row is at the top
+        asset_table_base1 = asset_table_base[asset_table_base["Asset"] == "Overall"]
+        asset_table_base2 = asset_table_base[asset_table_base["Asset"] != "Overall"]
+        asset_table_base = pd.concat([asset_table_base1, asset_table_base2])
+
+        asset_table_biden1 = asset_table_biden[asset_table_biden["Asset"] == "Overall"]
+        asset_table_biden2 = asset_table_biden[asset_table_biden["Asset"] != "Overall"]
+        asset_table_biden = pd.concat([asset_table_biden1, asset_table_biden2])
+
+        ind_table_base1 = ind_table_base[ind_table_base["Industry"] == "Overall"]
+        ind_table_base2 = ind_table_base[ind_table_base["Industry"] != "Overall"]
+        ind_table_base = pd.concat([ind_table_base1, ind_table_base2])
+
+        ind_table_biden1 = ind_table_biden[ind_table_biden["Industry"] == "Overall"]
+        ind_table_biden2 = ind_table_biden[ind_table_biden["Industry"] != "Overall"]
+        ind_table_biden = pd.concat([ind_table_biden1, ind_table_biden2])
+
         return asset_table_base, asset_table_biden, ind_table_base, ind_table_biden
 
     asset_table_base, asset_table_biden, ind_table_base, ind_table_biden = make_tables(

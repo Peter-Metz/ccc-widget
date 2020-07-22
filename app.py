@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 import plotly.io as pio
 import plotly.graph_objects as go
 import dash
@@ -8,6 +9,8 @@ import dash_table
 from dash.dependencies import Input, Output
 
 external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
+
+CURR_PATH = os.path.abspath(os.path.dirname(__file__))
 
 
 def calc_overall_treat(df, var):
@@ -44,10 +47,12 @@ def calc_overall_treat(df, var):
 # read Cost-of-Capital-Calculator output
 # combine current law and Biden results
 # by asset...
-base_asset_df = pd.read_csv("baseline_results_assets.csv")
+base_asset_path = os.path.join(CURR_PATH, "data/baseline_results_assets.csv")
+base_asset_df = pd.read_csv(base_asset_path)
 base_asset_df["policy"] = "base"
 
-biden_asset_df = pd.read_csv("biden_results_assets.csv")
+biden_asset_path = os.path.join(CURR_PATH, "data/biden_results_assets.csv")
+biden_asset_df = pd.read_csv(biden_asset_path)
 biden_asset_df["policy"] = "biden"
 
 asset_df_all = pd.concat([base_asset_df, biden_asset_df])
@@ -89,10 +94,12 @@ asset_df = pd.concat([asset_df_all, asset_df_overall])
 
 # combine current law and Biden results
 # by industry...
-base_industry_df = pd.read_csv("baseline_byindustry.csv")
+base_industry_path = os.path.join(CURR_PATH, "data/baseline_byindustry.csv")
+base_industry_df = pd.read_csv(base_industry_path)
 base_industry_df["policy"] = "base"
 
-biden_industry_df = pd.read_csv("biden_industry_results.csv")
+biden_industry_path = os.path.join(CURR_PATH, "data/biden_industry_results.csv")
+biden_industry_df = pd.read_csv(biden_industry_path)
 biden_industry_df["policy"] = "biden"
 
 industry_df_all = pd.concat([base_industry_df, biden_industry_df])
@@ -139,6 +146,7 @@ industry_df_all = industry_df_all.drop(
 )
 # stack original df and overall tax treatment df
 industry_df = pd.concat([industry_df_all, industry_df_overall])
+
 
 def make_fig(year, tax_treat, financing):
     """
@@ -362,7 +370,7 @@ app.layout = html.Div(
 
             *Modeling and design by Matt Jensen, Peter Metz, and Kyle Pomerleau*
             """,
-            style={"max-width": "700px", "padding-bottom": "60px", "color": "#4f5866"}
+            style={"max-width": "700px", "padding-bottom": "60px", "color": "#4f5866"},
         ),
         html.Div(
             [
@@ -392,7 +400,7 @@ app.layout = html.Div(
                 "width": "450px",
                 "display": "inline-block",
                 "padding-right": "30px",
-                "padding-bottom": "50px",              
+                "padding-bottom": "50px",
                 # "background-color": "#F9F9F9"
             },
         ),

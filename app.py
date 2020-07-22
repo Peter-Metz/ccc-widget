@@ -456,6 +456,8 @@ app.layout = html.Div(
             The code that modifies the underlying models to produce these estimates
             can be found [here](https://github.com/kpomerleau/Cost-of-Capital-Calculator/tree/Tests) 
             and [here](https://github.com/erinmelly/Tax-Calculator/tree/Biden).
+            The code that powers this data visualization can be found
+            [here](https://github.com/Peter-Metz/ccc-widget).
             """,
             style={"padding-top": "30px", "max-width": "1000px"},
         ),

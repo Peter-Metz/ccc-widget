@@ -370,12 +370,11 @@ app.layout = html.Div(
                 html.Label("Year"),
                 dcc.Slider(
                     id="year",
-                    value=2020,
-                    min=2020,
-                    max=2029,
+                    value=2021,
+                    min=2021,
+                    max=2030,
                     step=1,
                     marks={
-                        2020: "2020",
                         2021: "2021",
                         2022: "2022",
                         2023: "2023",
@@ -385,6 +384,7 @@ app.layout = html.Div(
                         2027: "2027",
                         2028: "2028",
                         2029: "2029",
+                        2030: "2030",
                     },
                 ),
             ],

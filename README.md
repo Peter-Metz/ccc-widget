@@ -9,6 +9,7 @@ To run locally:
 ```
 git clone https://github.com/Peter-Metz/ccc-widget
 cd ccc-widget
-pip install dash
+conda env create
+conda activate widget-dev
 python app.py
 ```

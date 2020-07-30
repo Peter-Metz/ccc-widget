@@ -314,7 +314,7 @@ def make_fig(year, tax_treat, financing):
     if financing == "mettr_e" and tax_treat == "corporate":
         fig_asset.layout.xaxis.range = [-0.05, 0.5]
     elif financing == "mettr_e" and tax_treat == "non-corporate":
-        fig_asset.layout.xaxis.range = [-0.18, 0.38]
+        fig_asset.layout.xaxis.range = [-0.2, 0.38]
     elif financing == "mettr_d" and tax_treat == "corporate":
         fig_asset.layout.xaxis.range = [-0.45, 0.38]
     elif financing == "mettr_d" and tax_treat == "non-corporate":
@@ -332,7 +332,7 @@ def make_fig(year, tax_treat, financing):
 
     # fix the x-axis when changing years for industry fig
     if financing == "mettr_e" and tax_treat == "corporate":
-        fig_industry.layout.xaxis.range = [0.1, 0.45]
+        fig_industry.layout.xaxis.range = [0.1, 0.5]
     elif financing == "mettr_e" and tax_treat == "non-corporate":
         fig_industry.layout.xaxis.range = [0.0, 0.35]
     elif financing == "mettr_d" and tax_treat == "corporate":
@@ -340,15 +340,15 @@ def make_fig(year, tax_treat, financing):
     elif financing == "mettr_d" and tax_treat == "non-corporate":
         fig_industry.layout.xaxis.range = [0.05, 0.4]
     elif financing == "mettr_mix" and tax_treat == "corporate":
-        fig_industry.layout.xaxis.range = [0.07, 0.4]
+        fig_industry.layout.xaxis.range = [0.07, 0.45]
     elif financing == "mettr_mix" and tax_treat == "non-corporate":
         fig_industry.layout.xaxis.range = [0.0, 0.35]
     elif financing == "mettr_d" and tax_treat == "overall":
         fig_industry.layout.xaxis.range = [-0.10, 0.33]
     elif financing == "mettr_mix" and tax_treat == "overall":
-        fig_industry.layout.xaxis.range = [0.08, 0.4]
+        fig_industry.layout.xaxis.range = [0.08, 0.43]
     elif financing == "mettr_e" and tax_treat == "overall":
-        fig_industry.layout.xaxis.range = [0.1, 0.4]
+        fig_industry.layout.xaxis.range = [0.1, 0.45]
 
     return (
         fig_asset,

@@ -18,5 +18,5 @@ def run_model(meta_param_dict, adjustment):
     pass
 
 
-if __name__ == "__main__":
+def dash():
     app.run_server(debug=True, use_reloader=True)

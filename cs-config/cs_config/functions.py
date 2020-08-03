@@ -21,6 +21,5 @@ def run_model(meta_param_dict, adjustment):
 
 def dash():
     app.run_server(
-        url_base_pathname=os.environ.get("URL_BASE_PATHNAME", "/"),
         port=os.environ.get("PORT", 8050),
     )

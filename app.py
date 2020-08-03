@@ -360,7 +360,10 @@ def make_fig(year, tax_treat, financing):
     )
 
 
-app = dash.Dash(external_stylesheets=external_stylesheets)
+app = dash.Dash(
+    url_base_pathname=os.environ.get("URL_BASE_PATHNAME", "/"),
+    external_stylesheets=external_stylesheets,
+)
 # layout can be thought of as HTML elements
 app.layout = html.Div(
     [

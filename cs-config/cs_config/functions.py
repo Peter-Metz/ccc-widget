@@ -1,4 +1,5 @@
-# Write or import your Compute Studio functions here.
+import os
+
 from app import app
 
 
@@ -19,4 +20,7 @@ def run_model(meta_param_dict, adjustment):
 
 
 def dash():
-    app.run_server(debug=True, use_reloader=True)
+    app.run_server(
+        url_base_pathname=os.environ.get("URL_BASE_PATHNAME", "/"),
+        port=os.environ.get("PORT", 8050),
+    )

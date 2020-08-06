@@ -1,6 +1,6 @@
 import os
 
-from app import app
+from app import server
 
 
 def get_version():
@@ -19,7 +19,9 @@ def run_model(meta_param_dict, adjustment):
     pass
 
 
-def dash():
-    app.run_server(
-        port=os.environ.get("PORT", 8050),
-    )
+# def dash():
+#     app.run_server(
+#         port=os.environ.get("PORT", 8050),
+#     )
+
+dash = server

@@ -460,15 +460,15 @@ app.layout = html.Div(
         html.Div([dcc.Graph(id="fig_tab")]),
         dcc.Markdown(
             """
-            **Note:** This project builds on TK paper by Pomerleau.
-            Data for this project are generated using the open-source
-            <a href="https://github.com/PSLmodels/Cost-of-Capital-Calculator" target="_blank">Cost-of-Capital-Calculator</a>
-            and <a href="https://github.com/PSLmodels/Tax-Calculator" target="_blank">Tax-Calculator</a> projects.
+            **Note:** This project builds on TK paper by Pomerleau. 
+            Data for this project are generated using the open-source 
+            <a href="https://github.com/PSLmodels/Cost-of-Capital-Calculator" children="Cost-of-Capital-Calculator" target="blank"/>
+            and <a href="https://github.com/PSLmodels/Tax-Calculator" children="Tax-Calculator" target="blank"/> projects. 
             The code that modifies the underlying models to produce these estimates
-            can be found <a href="https://github.com/kpomerleau/Cost-of-Capital-Calculator/tree/Tests" target="_blank">here</a>
-            and <a href="https://github.com/erinmelly/Tax-Calculator/tree/Biden" target="_blank">here</a>.
+            can be found <a href="https://github.com/kpomerleau/Cost-of-Capital-Calculator/tree/Tests" children="here" target="blank"/>
+            and <a href="https://github.com/erinmelly/Tax-Calculator/tree/Biden" children="here" target="blank" />.
             The code that powers this data visualization can be found
-            <a href="https://github.com/Peter-Metz/ccc-widget" target="_blank">here</a>.
+            <a href="https://github.com/Peter-Metz/ccc-widget" children="here" target="blank" />.
             """,
             style={"padding-top": "30px", "max-width": "1000px"},
             dangerously_allow_html=True,

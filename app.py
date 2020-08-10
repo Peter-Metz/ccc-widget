@@ -460,15 +460,15 @@ app.layout = html.Div(
         html.Div([dcc.Graph(id="fig_tab")]),
         dcc.Markdown(
             """
-            **Note:** This project builds on TK paper by Pomerleau. 
-            Data for this project are generated using the open-source 
-            [Cost-of-Capital-Calculator](https://github.com/PSLmodels/Cost-of-Capital-Calculator) 
-            and [Tax-Calculator](https://github.com/PSLmodels/Tax-Calculator) projects. 
+            **Note:** This project builds on TK paper by Pomerleau.
+            Data for this project are generated using the open-source
+            <a href="https://github.com/PSLmodels/Cost-of-Capital-Calculator" target="_blank">Cost-of-Capital-Calculator</a>
+            and <a href="https://github.com/PSLmodels/Tax-Calculator" target="_blank">Tax-Calculator</a> projects.
             The code that modifies the underlying models to produce these estimates
-            can be found [here](https://github.com/kpomerleau/Cost-of-Capital-Calculator/tree/Tests) 
-            and [here](https://github.com/erinmelly/Tax-Calculator/tree/Biden).
+            can be found <a href="https://github.com/kpomerleau/Cost-of-Capital-Calculator/tree/Tests" target="_blank">here</a>
+            and <a href="https://github.com/erinmelly/Tax-Calculator/tree/Biden" target="_blank">here</a>.
             The code that powers this data visualization can be found
-            [here](https://github.com/Peter-Metz/ccc-widget).
+            <a href="https://github.com/Peter-Metz/ccc-widget" target="_blank">here</a>.
             """,
             style={"padding-top": "30px", "max-width": "1000px"},
         ),

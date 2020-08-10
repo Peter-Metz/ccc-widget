@@ -1,4 +1,4 @@
-ARG=1
+ARG=2
 git clone https://github.com/hdoupe/ccc-widget
 cd ccc-widget
 git fetch origin

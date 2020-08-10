@@ -471,6 +471,7 @@ app.layout = html.Div(
             <a href="https://github.com/Peter-Metz/ccc-widget" target="_blank">here</a>.
             """,
             style={"padding-top": "30px", "max-width": "1000px"},
+            dangerously_allow_html=True,
         ),
         dcc.Markdown(
             """

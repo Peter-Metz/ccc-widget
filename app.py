@@ -360,7 +360,10 @@ def make_fig(year, tax_treat, financing):
     )
 
 
-app = dash.Dash(external_stylesheets=external_stylesheets)
+app = dash.Dash(
+    url_base_pathname=os.environ.get("URL_BASE_PATHNAME", "/"),
+    external_stylesheets=external_stylesheets,
+)
 # layout can be thought of as HTML elements
 app.layout = html.Div(
     [
@@ -460,15 +463,16 @@ app.layout = html.Div(
             **Note:** This dashboard accompanies "The tax burden on business investment
             under Joe Biden’s tax proposal" (Pomerleau 2020). 
             Data for this project are generated using the open-source 
-            [Cost-of-Capital-Calculator](https://github.com/PSLmodels/Cost-of-Capital-Calculator) 
-            and [Tax-Calculator](https://github.com/PSLmodels/Tax-Calculator) projects. 
+            <a href="https://github.com/PSLmodels/Cost-of-Capital-Calculator" children="Cost-of-Capital-Calculator" target="blank"/>
+            and <a href="https://github.com/PSLmodels/Tax-Calculator" children="Tax-Calculator" target="blank"/> projects. 
             The code that modifies the underlying models to produce these estimates
-            can be found [here](https://github.com/kpomerleau/Cost-of-Capital-Calculator/tree/Tests) 
-            and [here](https://github.com/erinmelly/Tax-Calculator/tree/Biden).
+            can be found <a href="https://github.com/kpomerleau/Cost-of-Capital-Calculator/tree/Tests" children="here" target="blank"/>
+            and <a href="https://github.com/erinmelly/Tax-Calculator/tree/Biden" children="here" target="blank" />.
             The code that powers this data visualization can be found
-            [here](https://github.com/Peter-Metz/ccc-widget).
+            <a href="https://github.com/Peter-Metz/ccc-widget" children="here" target="blank" />.
             """,
             style={"padding-top": "30px", "max-width": "1000px"},
+            dangerously_allow_html=True,
         ),
         dcc.Markdown(
             """

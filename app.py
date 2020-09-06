@@ -457,8 +457,8 @@ app.layout = html.Div(
         html.Div([dcc.Graph(id="fig_tab")]),
         dcc.Markdown(
             """
-            **Note:** This project builds on "The tax burden on business investment
-            under Joe Biden’s tax proposal" by Kyle Pomerleau (September 2020). 
+            **Note:** This dashboard accompanies "The tax burden on business investment
+            under Joe Biden’s tax proposal" (Pomerleau 2020). 
             Data for this project are generated using the open-source 
             [Cost-of-Capital-Calculator](https://github.com/PSLmodels/Cost-of-Capital-Calculator) 
             and [Tax-Calculator](https://github.com/PSLmodels/Tax-Calculator) projects. 
